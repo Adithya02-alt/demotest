@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK 21'         
+        jdk 'JDK 21' // Make sure this matches a configured JDK in Jenkins
     }
 
     stages {
@@ -14,23 +14,23 @@ pipeline {
 
         stage('Compile') {
             steps {
-                sh ' clean compile'
+                sh 'javac *.java'
             }
         }
 
-        stage('Test') {
+        stage('Run') {
             steps {
-                sh 'test'
+                sh 'java Hello' 
             }
         }
+    }
 
-        
     post {
         success {
-            echo 'Build and tests succeeded!'
+            echo 'Java program compiled and ran successfully!'
         }
         failure {
-            echo 'Build or tests failed.'
+            echo 'Something went wrong during compile or run.'
         }
     }
 }
