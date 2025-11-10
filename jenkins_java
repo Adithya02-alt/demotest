@@ -2,31 +2,29 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK 21'       
+        jdk 'JDK 21'         
     }
 
-    steps{
-      stage('Checkout')
-      {
-        git branch:'main',
-        url:'git clone https://github.com/Adithya02-alt/demotest.git'
-      }
-    }
-  
-    stage('Compile') {
+    stages {
+        stage('Checkout') {
             steps {
-                echo 'compile java file'
-                sh 'java hello world'
+                git 'https://github.com/Adithya02-alt/demotest.git'
             }
         }
 
-    stage('Run') {
+        stage('Compile') {
             steps {
-                echo 'build and execution successful'
-                sh 'java hello world'
+                sh ' clean compile'
             }
         }
 
+        stage('Test') {
+            steps {
+                sh 'test'
+            }
+        }
+
+        
     post {
         success {
             echo 'Build and tests succeeded!'
