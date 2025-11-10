@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'JDK 21'       
+    }
+
+    steps{
+      stage('Checkout')
+      {
+        git branch:'main',
+        url:'git clone https://github.com/Adithya02-alt/demotest.git'
+      }
+    }
+  
+    stage('Compile') {
+            steps {
+                echo 'compile java file'
+                sh 'java hello world'
+            }
+        }
+
+    stage('Run') {
+            steps {
+                echo 'build and execution successful'
+                sh 'java hello world'
+            }
+        }
+
+    post {
+        success {
+            echo 'Build and tests succeeded!'
+        }
+        failure {
+            echo 'Build or tests failed.'
+        }
+    }
+}
