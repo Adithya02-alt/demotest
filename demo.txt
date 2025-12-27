@@ -1,0 +1,184 @@
+To automate a job with **Jenkins** on **Docker** using **Grafana** for monitoring, you need to set up a few things. I'll break down the steps:
+
+### Prerequisites
+
+1. **Jenkins** should be installed in a Docker container.
+2. **Grafana** should be installed, and you need to configure it to monitor Jenkins.
+3. **Docker** should be installed on your system.
+4. **Prometheus** should be installed and configured to scrape Jenkins metrics for Grafana to visualize.
+
+Here is a **step-by-step procedure** to achieve this:
+
+---
+
+### **Step 1: Set up Jenkins in a Docker container**
+
+1. **Install Docker** (if not already installed):
+
+   * On Ubuntu:
+
+     ```bash
+     sudo apt-get update
+     sudo apt-get install docker.io
+     sudo systemctl start docker
+     sudo systemctl enable docker
+     ```
+   * On macOS/Windows, you can download and install Docker from the official website.
+
+2. **Run Jenkins Docker container**:
+   You can start a Jenkins container using the following command:
+
+   ```bash
+   docker run -d -p 8080:8080 -p 50000:50000 --name jenkins jenkins/jenkins:lts
+   ```
+
+   * **8080** is the default port Jenkins runs on.
+   * **50000** is used for JNLP slave agents.
+   * This will run the **LTS version** of Jenkins.
+
+3. **Get the Jenkins unlock key**:
+   To unlock Jenkins for the first time, grab the unlock key from the container logs:
+
+   ```bash
+   docker logs jenkins
+   ```
+
+   Copy the unlock key and paste it into the Jenkins setup page ([http://localhost:8080](http://localhost:8080)).
+
+---
+
+### **Step 2: Set up Prometheus to monitor Jenkins**
+
+1. **Create a Prometheus configuration file** for Jenkins.
+
+   * You need to configure Prometheus to scrape Jenkins metrics. Create a file called `prometheus.yml` with the following content:
+
+   ```yaml
+   global:
+     scrape_interval: 10s
+
+   scrape_configs:
+     - job_name: 'jenkins'
+       metrics_path: '/prometheus'
+       static_configs:
+         - targets: ['<jenkins_ip>:8080']
+   ```
+
+   Replace `<jenkins_ip>` with the actual IP or hostname of your Jenkins server.
+
+2. **Install Prometheus** (if not installed):
+
+   * On Linux (using `apt` for Ubuntu/Debian):
+
+     ```bash
+     sudo apt-get install prometheus
+     ```
+   * Or, you can use Docker to run Prometheus:
+
+     ```bash
+     docker run -d -p 9090:9090 --name prometheus -v /path/to/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus
+     ```
+
+---
+
+### **Step 3: Set up Grafana to visualize Jenkins metrics**
+
+1. **Run Grafana using Docker**:
+   You can use Docker to run Grafana as well. Here’s a simple command:
+
+   ```bash
+   docker run -d -p 3000:3000 --name=grafana grafana/grafana
+   ```
+
+2. **Access Grafana**:
+   Once Grafana is running, go to [http://localhost:3000](http://localhost:3000). The default login is:
+
+   * **Username**: `admin`
+   * **Password**: `admin`
+
+3. **Add Prometheus as a data source**:
+
+   * Go to **Configuration (Gear icon) > Data Sources**.
+   * Click **Add data source** and choose **Prometheus**.
+   * In the **URL** field, enter `http://<prometheus_ip>:9090` (replace `<prometheus_ip>` with the Prometheus server's IP).
+   * Click **Save & Test**.
+
+---
+
+### **Step 4: Install Jenkins Prometheus Plugin**
+
+1. **Install Prometheus Metrics Plugin in Jenkins**:
+
+   * Go to **Manage Jenkins > Manage Plugins**.
+   * Search for **Prometheus Metrics Plugin** and install it.
+
+2. **Enable Prometheus Exporter in Jenkins**:
+
+   * After installing the plugin, go to **Manage Jenkins > Configure System**.
+   * Scroll down to the **Prometheus Metrics** section and check the box to enable the Prometheus exporter.
+   * Set the **Port** for Prometheus to scrape metrics (default is 8080).
+
+---
+
+### **Step 5: Create Jenkins Job to Be Monitored**
+
+1. **Create a Jenkins Job**:
+
+   * Go to Jenkins’ dashboard and click **New Item**.
+   * Choose a job type (e.g., Freestyle or Pipeline).
+   * Set up your job and configure it to run your desired tasks.
+2. **Trigger the Job**:
+
+   * You can manually trigger the job or configure it to run on specific triggers (e.g., Git push, schedule).
+   * Jenkins should now expose job-related metrics for Prometheus to scrape.
+
+---
+
+### **Step 6: Set up Grafana Dashboard to Monitor Jenkins**
+
+1. **Import Jenkins Dashboard in Grafana**:
+   Grafana has pre-made dashboards for Jenkins. You can import one from the **Grafana Dashboard** repository.
+
+   * Go to **Create > Import** in Grafana.
+   * Enter the Dashboard ID: **10917** (this is a common dashboard for Jenkins).
+   * Click **Load** and then select the Prometheus data source.
+   * Click **Import**.
+
+2. **Customize the Dashboard** (optional):
+
+   * You can create custom dashboards or tweak the imported one based on the metrics you want to visualize (e.g., job status, build duration, etc.).
+
+---
+
+### **Step 7: Automate Jenkins Jobs**
+
+1. **Create a Jenkins Pipeline Job**:
+
+   * In Jenkins, create a **Pipeline Job** for automating tasks like testing, deployment, etc.
+   * Use a **Jenkinsfile** to define the pipeline steps (e.g., build, test, deploy).
+   * You can trigger this job using various methods (e.g., Git webhooks, scheduled triggers, manual triggers).
+
+---
+
+### **Step 8: Monitor Jenkins Jobs via Grafana**
+
+* Once Jenkins jobs are being run and Prometheus is scraping the metrics, Grafana will display these metrics in real-time.
+* You can track:
+
+  * Job execution time
+  * Job success/failure rate
+  * System resources consumed during the build (CPU, memory)
+  * Jenkins slave status
+
+---
+
+### **Conclusion**
+
+By following these steps, you’ve:
+
+* Set up **Jenkins in a Docker container**.
+* Configured **Prometheus** to scrape Jenkins metrics.
+* Set up **Grafana** to visualize those metrics.
+* Automated Jenkins jobs and monitored them via Grafana.
+
+This gives you a robust continuous integration pipeline with monitoring capabilities for performance, job status, and resource usage! Let me know if you need any clarification or additional information.
